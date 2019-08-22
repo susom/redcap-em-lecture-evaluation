@@ -1,0 +1,46 @@
+{
+  "name": "Lecture Evaluations",
+  "namespace": "Stanford\\LectureEvaluation",
+  "description": "Allow student to evaluate lectures",
+  "authors": [
+    {
+      "name": "Ihab Zeedia",
+      "email": "ihabz@stanford.edu",
+      "institution": "Stanford University"
+    },
+    {
+      "name": "Andy Martin",
+      "email": "andy123@stanford.edu",
+      "institution": "Stanford University"
+    }
+  ],
+  "permissions": [
+    "redcap_every_page_before_render",
+    "redcap_save_record",
+    "redcap_survey_complete"
+  ],
+  "no-auth-pages": [
+    "view/student",
+    "view/evaluation"
+  ],
+  "project-settings": [
+    {
+      "key": "lectures",
+      "name": "Select Lecture Event",
+      "required": true,
+      "type": "event-list"
+    },
+    {
+      "key": "students",
+      "name": "Select Students Event",
+      "required": true,
+      "type": "event-list"
+    },
+    {
+      "key": "evaluations",
+      "name": "Select Evaluation Event",
+      "required": true,
+      "type": "event-list"
+    }
+  ]
+}
