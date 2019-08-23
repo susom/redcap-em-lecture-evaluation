@@ -152,7 +152,7 @@ class LectureEvaluation extends \ExternalModules\AbstractExternalModule
 
     private function generateURL($hash)
     {
-        return $this->getUrl('view/student.php', true, false) . '&hash=' . $hash;
+        return $this->getUrl('view/student.php', true, true) . '&hash=' . $hash;
     }
 
     public function redirect($url)
