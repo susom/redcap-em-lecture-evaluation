@@ -23,6 +23,16 @@
     "view/student",
     "view/evaluation"
   ],
+  "links": {
+    "project": [
+      {
+        "name": "View Students",
+        "icon": "report",
+        "url": "view/students.php",
+        "show-header-and-footer": true
+      }
+    ]
+  },
   "project-settings": [
     {
       "key": "lectures",
