@@ -165,4 +165,21 @@ class Evaluation
             return false;
         }
     }
+
+    public function getStudentStates($studentId, $lectures, $lectureEventId)
+    {
+        $completed = 0;
+        $TBA = 0;
+        foreach ($lectures as $id => $lecture) {
+            if ($eval = $this->isEvaluationComplete($studentId, $id)) {
+                if ($eval['evaluation_setup_complete'] == COMPLETE) {
+                    $completed++;
+                }
+            }
+            if ($lecture[$lectureEventId]['lecture_date'] == '') {
+                $TBA++;
+            }
+        }
+        return array($completed, count($lectures) - $completed - $TBA);
+    }
 }

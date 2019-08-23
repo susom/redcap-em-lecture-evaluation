@@ -81,4 +81,13 @@ class Lecture
         );
         return REDCap::getData($params);
     }
+
+    public function getAllLecturesCount()
+    {
+        $param = array(
+            'return_format' => 'array',
+            'events' => $this->getEvent(),
+        );
+        return count(\REDCap::getData($param));
+    }
 }

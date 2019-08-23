@@ -47,13 +47,20 @@ use \REDCap;
             <th>First Name</th>
             <th>Last Name</th>
             <th>Email</th>
+            <th>Number of Completed Evaluations</th>
+            <th>Number of Pending Evaluations</th>
+            <th>Number of Future Evaluations</th>
             <th>URL</th>
             </thead>
             <tbody>
             <?php
             $students = $module->getStudent()->getAllStudent();
+            $lectures = $module->getLecture()->getCompletedLectures();
+            $count = $module->getLecture()->getAllLecturesCount();
             if (!empty($students)) {
                 foreach ($students as $id => $student) {
+                    list($completed, $todo) = $module->getEvaluation()->getStudentStates($id, $lectures,
+                        $module->getLecture()->getEvent());
                     ?>
                     <tr>
                         <td><?php echo $student[$module->getStudent()->getEvent()]['first_name'] ?></td>
@@ -61,6 +68,9 @@ use \REDCap;
                         <td>
                             <a href="mailto:<?php echo $student[$module->getStudent()->getEvent()]['email'] ?>"><?php echo $student[$module->getStudent()->getEvent()]['email'] ?></a>
                         </td>
+                        <td><?php echo $completed ?></td>
+                        <td><?php echo $todo ?></td>
+                        <td><?php echo $count - ($completed + $todo) ?></td>
                         <td><a href="<?php echo $student[$module->getStudent()->getEvent()]['student_url'] ?>"
                                target="_blank"><?php echo $student[$module->getStudent()->getEvent()]['student_url'] ?></a>
                         </td>

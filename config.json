@@ -35,6 +35,12 @@
   },
   "project-settings": [
     {
+      "key": "header_text",
+      "name": "Please add Student Header text",
+      "required": true,
+      "type": "textarea"
+    },
+    {
       "key": "lectures",
       "name": "Select Lecture Event",
       "required": true,
