@@ -160,7 +160,6 @@ class LectureEvaluation extends \ExternalModules\AbstractExternalModule
         ob_start();
         header('Location: ' . $url);
         ob_end_flush();
-        die();
     }
 
     public function redcap_survey_complete($project_id, $record)
@@ -182,6 +181,7 @@ class LectureEvaluation extends \ExternalModules\AbstractExternalModule
         $student = $this->getStudent()->getRecord();
 
         $this->redirect($this->generateURL($student[$sid][$this->getStudent()->getEvent()]['hash']));
+        $this->exitAfterHook();
     }
 
     public function redcap_save_record($project_id, $record, $instrument, $event_id)
