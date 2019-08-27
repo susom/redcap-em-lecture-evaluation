@@ -62,7 +62,7 @@ class Lecture
      */
     public function getCompletedLectures()
     {
-        $date = date('Y-m-d');
+        $date = date('Y-m-d H:i:s');
         $param = array(
             'return_format' => 'array',
             'events' => $this->getEvent(),
