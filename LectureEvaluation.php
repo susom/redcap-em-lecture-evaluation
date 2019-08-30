@@ -204,4 +204,22 @@ class LectureEvaluation extends \ExternalModules\AbstractExternalModule
             }
         }
     }
+
+
+    public function isStudentMappedToLecture($student, $lecture)
+    {
+        //make sure student is mapped to this lecture
+        $studentMap = $student[$this->getStudent()->getEvent()]['lecture_student_mapping'];
+        $lectureMap = $lecture[$this->getLecture()->getEvent()]['lecture_student_mapping'];
+        foreach ($studentMap as $value => $row) {
+            if ($row == "0") {
+                continue;
+            } else {
+                if ($lectureMap[$value] == "1") {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 }

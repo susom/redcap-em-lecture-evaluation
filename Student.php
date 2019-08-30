@@ -41,7 +41,7 @@ class Student
     public function setRecord($identifier, $field = 'hash')
     {
         $this->record = $this->getStudentViaHash($identifier, $field,
-            array('id', 'first_name', 'last_name', 'email', 'hash', 'student_url'));;
+            array());;
     }
 
     /**

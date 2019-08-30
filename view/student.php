@@ -55,17 +55,26 @@ use \REDCap;
             <?php
             $lectures = $module->getLecture()->getCompletedLectures();
             $completed = 0;
+            $total = 0;
             $TBA = 0;
             $student = array_pop($module->getStudent()->getRecord());
             $studentId = $student[$module->getStudent()->getEvent()]['id'];
             if (!empty($lectures)) {
                 foreach ($lectures as $id => $lecture) {
                     $notes = '';
+
+
+                    //if student and lecture have same map
+                    if (!$module->isStudentMappedToLecture($student, $lecture)) {
+                        continue;
+                    } else {
+                        $total++;
+                    }
+
                     if ($lecture[$module->getLecture()->getEvent()]['lecture_date'] == '') {
                         $TBA++;
                         continue;
                     }
-
                     if ($eval = $module->getEvaluation()->isEvaluationComplete($studentId, $id)) {
                         if ($eval['evaluation_setup_complete'] == COMPLETE) {
                             $completed++;
@@ -97,7 +106,7 @@ use \REDCap;
         </table>
     </div>
     <div class="row p-1">
-        <h4>You have completed <?php echo $completed ?> out of <?php echo count($lectures) - $TBA ?></h4>
+        <h4>You have completed <?php echo $completed ?> out of <?php echo $total - $TBA ?></h4>
     </div>
 </div>
 <script src="<?php echo $module->getUrl('asset/js/student.js') ?>"></script>
