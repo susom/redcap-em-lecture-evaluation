@@ -164,24 +164,26 @@ class LectureEvaluation extends \ExternalModules\AbstractExternalModule
 
     public function redcap_survey_complete($project_id, $record)
     {
-        $this->getEvaluation()->setRecord($record);
-        $eval = $this->getEvaluation()->getRecord();
-        $sid = $eval[$record][$this->getEvaluation()->getEvent()]['evaluation_student_id'];
+        if (!is_null($record)) {
+            $this->getEvaluation()->setRecord($record);
+            $eval = $this->getEvaluation()->getRecord();
+            $sid = $eval[$record][$this->getEvaluation()->getEvent()]['evaluation_student_id'];
 
-        $data['id'] = $record;
-        $data['lecture_complete'] = COMPLETE;
-        $data['evaluation_setup_complete'] = COMPLETE;
-        $data['redcap_event_name'] = REDCap::getEventNames(true, false, $this->getEvaluation()->getEvent());
-        $response = \REDCap::saveData('json', json_encode(array($data)));
-        if (!empty($response['errors'])) {
-            throw new \LogicException(implode(",", $response['errors']));
+            $data['id'] = $record;
+            $data['lecture_complete'] = COMPLETE;
+            $data['evaluation_setup_complete'] = COMPLETE;
+            $data['redcap_event_name'] = REDCap::getEventNames(true, false, $this->getEvaluation()->getEvent());
+            $response = \REDCap::saveData('json', json_encode(array($data)));
+            if (!empty($response['errors'])) {
+                throw new \LogicException(implode(",", $response['errors']));
+            }
+
+            $this->getStudent()->setRecord($sid, 'id');
+            $student = $this->getStudent()->getRecord();
+
+            $this->redirect($this->generateURL($student[$sid][$this->getStudent()->getEvent()]['hash']));
+            $this->exitAfterHook();
         }
-
-        $this->getStudent()->setRecord($sid, 'id');
-        $student = $this->getStudent()->getRecord();
-
-        $this->redirect($this->generateURL($student[$sid][$this->getStudent()->getEvent()]['hash']));
-        $this->exitAfterHook();
     }
 
     public function redcap_save_record($project_id, $record, $instrument, $event_id)
