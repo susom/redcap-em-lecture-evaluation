@@ -62,13 +62,20 @@ class Lecture
      */
     public function getCompletedLectures()
     {
+        # do filter logic on the foreach loop instead of getData
         $date = date('Y-m-d H:i:s');
         $param = array(
             'return_format' => 'array',
-            'events' => $this->getEvent(),
-            'filterLogic' => "[lecture_date] <= '$date'"
+            'events' => $this->getEvent()
         );
-        return \REDCap::getData($param);
+        $result = array();
+        $records = \REDCap::getData($param);
+        foreach ($records as $key => $record) {
+            if ($record[$this->getEvent()]['lecture_date'] <= $date) {
+                $result[$key] = $records[$key];
+            }
+        }
+        return $result;
     }
 
     private function getLectureRecord($id, $fields = array('id'))

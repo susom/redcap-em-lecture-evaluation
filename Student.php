@@ -93,12 +93,18 @@ class Student
 
     private function getStudentViaHash($identifier, $field = 'hash', $fields = array('hash'))
     {
+        # do filter logic on the foreach loop instead of getData
         $params = array(
             'return_format' => 'array',
             'fields' => $fields,
             'events' => $this->getEvent(),
-            'filterLogic' => "[$field] = '$identifier'"
         );
-        return REDCap::getData($params);
+        $records = REDCap::getData($params);;
+        foreach ($records as $key => $record) {
+            if ($record[$this->getEvent()]['hash'] == $identifier) {
+                return array($key => $records[$key]);
+            }
+        }
+        return false;
     }
 }

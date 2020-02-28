@@ -10,6 +10,7 @@ use REDCap;
  * @property  int $event
  * @property  string $name
  * @property array $record
+ * @property array $evaluations
  */
 class Evaluation
 {
@@ -18,6 +19,8 @@ class Evaluation
     private $name;
 
     private $record;
+
+    private $evaluations;
 
     public function __construct($eventId)
     {
@@ -29,6 +32,23 @@ class Evaluation
             echo $e->getMessage();
         }
     }
+
+    /**
+     * @return array
+     */
+    public function getEvaluations()
+    {
+        return $this->evaluations;
+    }
+
+    /**
+     * @param array $evaluations
+     */
+    public function setEvaluations($evaluations)
+    {
+        $this->evaluations = $evaluations;
+    }
+
 
     /**
      * @return array
@@ -151,12 +171,26 @@ class Evaluation
 
     public function isEvaluationComplete($studentId, $lectureId)
     {
-        $params = array(
-            'return_format' => 'array',
-            'events' => $this->getEvent(),
-            'filterLogic' => "[evaluation_lecture_id] = '$lectureId' AND [evaluation_student_id] = '$studentId'"
-        );
-        $result = REDCap::getData($params);
+        $result = array();
+        if (!$this->getEvaluations()) {
+            $params = array(
+                'return_format' => 'array',
+                'events' => $this->getEvent(),
+            );
+            $records = REDCap::getData($params);
+
+            # cache records to be used later through the loop.
+            $this->setEvaluations($records);
+        } else {
+            $records = $this->getEvaluations();
+        }
+
+        foreach ($records as $key => $record) {
+            if ($record[$this->getEvent()]['evaluation_lecture_id'] == $lectureId && $record[$this->getEvent()]['evaluation_student_id'] == $studentId) {
+                $result = array($key => $records[$key]);
+            }
+        }
+
 
         if (count($result) > 0) {
             $temp = array_pop($result);
