@@ -161,12 +161,20 @@ class Evaluation
 
     private function getEvaluationRecord($id)
     {
-        $params = array(
+        $param = array(
             'return_format' => 'array',
             'events' => $this->getEvent(),
-            'filterLogic' => "[id] = '$id'"
         );
-        return REDCap::getData($params);
+
+        $records = \REDCap::getData($param);
+        foreach ($records as $key => $record) {
+            if ($key == $id) {
+                return array($key => $record);
+            }
+        }
+
+
+        return false;
     }
 
     public function isEvaluationComplete($studentId, $lectureId)

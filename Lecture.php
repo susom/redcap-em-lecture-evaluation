@@ -80,13 +80,20 @@ class Lecture
 
     private function getLectureRecord($id, $fields = array('id'))
     {
-        $params = array(
+        $param = array(
             'return_format' => 'array',
-            'fields' => $fields,
             'events' => $this->getEvent(),
-            'filterLogic' => "[id] = '$id'"
         );
-        return REDCap::getData($params);
+
+
+        $records = \REDCap::getData($param);
+        foreach ($records as $key => $record) {
+            if ($key == $id) {
+                return array($key => $record);
+            }
+        }
+
+        return false;
     }
 
     public function getAllLecturesCount()
