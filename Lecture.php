@@ -2,6 +2,7 @@
 
 namespace Stanford\LectureEvaluation;
 
+use Kigkonsult\Icalcreator\Standard;
 use REDCap;
 
 /**
@@ -103,5 +104,47 @@ class Lecture
             'events' => $this->getEvent(),
         );
         return count(\REDCap::getData($param));
+    }
+
+    /**
+     * @param array $data
+     * @param int $projectId
+     * @return bool
+     */
+    public function updateFeedbackForm($data, $projectId, $record)
+    {
+
+        $data[INSTRUCTOR_ACTIONS___2] = "0";
+        $data[REDCap::getRecordIdField()] = $record;
+        $data['redcap_event_name'] = REDCap::getEventNames(true, false, $this->getEvent());
+
+        $response = \REDCap::saveData($projectId, 'json', json_encode(array($data)));
+
+        if (!empty($response['errors'])) {
+            throw new \LogicException(implode(",", $response['errors']));
+        }
+        return false;
+    }
+
+
+    /**
+     * @param int $lectureId
+     * @param Evaluation $evaluation
+     * @param int $projectId
+     */
+    public function processFeedback($lectureId, $evaluation, $projectId)
+    {
+
+        $evaluations = $evaluation->getLectureEvaluations($lectureId);
+        $data = array();
+        $data['number_of_evaluations'] = count($evaluations);
+        $data['last_update'] = date('Y-m-d H:i:s');
+        foreach ($evaluations as $evaluation) {
+            if ($evaluation['comments'] != '') {
+                $data['students_comments'] .= "* " . $evaluation['comments'] . "\n" . "-------------------------------------------------" . "\n";
+                $data['number_of_comment']++;
+            }
+        }
+        $this->updateFeedbackForm($data, $projectId, $lectureId);
     }
 }

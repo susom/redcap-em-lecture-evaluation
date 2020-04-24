@@ -7,6 +7,8 @@ use REDCap;
 include_once("Student.php");
 include_once("Lecture.php");
 include_once("Evaluation.php");
+require_once "emLoggerTrait.php";
+
 
 define('ACTIVE', 1);
 define('INACTIVE', 0);
@@ -14,6 +16,12 @@ define('INACTIVE', 0);
 define('INCOMPLETE', 0);
 define('UNVERIFIED', 1);
 define('COMPLETE', 2);
+
+
+define('INSTRUCTOR_ACTIONS_POST_CHECKBOX_1', '__chk__instructor_actions_RC_1');
+define('INSTRUCTOR_ACTIONS___1', 'instructor_actions___1');
+define('INSTRUCTOR_ACTIONS_POST_CHECKBOX_2', '__chk__instructor_actions_RC_2');
+define('INSTRUCTOR_ACTIONS___2', 'instructor_actions___2');
 
 /**
  * Class LectureEvaluation
@@ -25,6 +33,8 @@ define('COMPLETE', 2);
 class LectureEvaluation extends \ExternalModules\AbstractExternalModule
 {
 
+
+    use emLoggerTrait;
 
     private $student;
 
@@ -205,8 +215,14 @@ class LectureEvaluation extends \ExternalModules\AbstractExternalModule
                 throw new \LogicException(implode(",", $response['errors']));
             }
         }
-    }
+        if ($instrument == "instructor_feedback") {
 
+            if ($_POST[INSTRUCTOR_ACTIONS_POST_CHECKBOX_2] == "2") {
+                $this->getLecture()->processFeedback($record, $this->getEvaluation(), $this->getProjectId());
+            }
+
+        }
+    }
 
     public function isStudentMappedToLecture($student, $lecture)
     {

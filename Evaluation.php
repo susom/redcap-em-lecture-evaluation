@@ -224,4 +224,38 @@ class Evaluation
         }
         return array($completed, count($lectures) - $completed - $TBA);
     }
+
+    /**
+     * @return array
+     */
+    public function getAllEvaluations()
+    {
+        if (!$this->getEvaluations()) {
+            $params = array(
+                'return_format' => 'array',
+                'events' => $this->getEvent(),
+            );
+            $records = REDCap::getData($params);
+            $this->setEvaluations($records);
+        } else {
+            $records = $this->getEvaluations();
+        }
+        return $records;
+    }
+
+    /**
+     * @param int $lectureId
+     * @return array
+     */
+    public function getLectureEvaluations($lectureId)
+    {
+        $evaluations = $this->getAllEvaluations();
+        $result = array();
+        foreach ($evaluations as $evaluation) {
+            if ($lectureId == $evaluation[$this->getEvent()]['evaluation_lecture_id']) {
+                $result[] = $evaluation[$this->getEvent()];
+            }
+        }
+        return $result;
+    }
 }
