@@ -154,7 +154,7 @@ class Evaluation
         $data['redcap_event_name'] = REDCap::getEventNames(true, false, $this->getEvent());
         $response = \REDCap::saveData('json', json_encode(array($data)));
         if (!empty($response['errors'])) {
-            throw new \LogicException(implode(",", $response['errors']));
+            throw new \LogicException($response['errors']);
         }
         return array_pop($response['ids']);
     }

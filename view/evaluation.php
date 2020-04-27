@@ -13,7 +13,7 @@ try {
     $lecture = $module->getLecture()->getRecord();
     $lecture = $lecture[$lectureId][$module->getLecture()->getEvent()];
     //keep only lecture fields in $data
-    $lectureFields = REDCap::getFieldNames('lecture');
+    $lectureFields = \REDCap::getFieldNames('lecture');
     foreach ($lectureFields as $field) {
         $data[$field] = $lecture[$field];
     }
