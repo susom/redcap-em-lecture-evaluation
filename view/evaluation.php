@@ -11,8 +11,14 @@ try {
     $hash = filter_var($_GET['hash'], FILTER_SANITIZE_STRING);
 
     $lecture = $module->getLecture()->getRecord();
-    $data = $lecture[$lectureId][$module->getLecture()->getEvent()];
-    $x = array_pop($module->getStudent()->getRecord());;
+    $lecture = $lecture[$lectureId][$module->getLecture()->getEvent()];
+    //keep only lecture fields in $data
+    $lectureFields = REDCap::getFieldNames('lecture');
+    foreach ($lectureFields as $field) {
+        $data[$field] = $lecture[$field];
+    }
+
+
     $student = array_pop($module->getStudent()->getRecord());
     $data['evaluation_lecture_id'] = $data['id'];
     $data['evaluation_student_id'] = $student[$module->getStudent()->getEvent()]['id'];
