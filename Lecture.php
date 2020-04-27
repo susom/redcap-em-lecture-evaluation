@@ -137,14 +137,31 @@ class Lecture
 
         $evaluations = $evaluation->getLectureEvaluations($lectureId);
         $data = array();
-        $data['number_of_evaluations'] = count($evaluations);
+        $data['sample_size'] = count($evaluations);
         $data['last_update'] = date('Y-m-d H:i:s');
+        $avgScore = 0;
+        $lecOrg = 0;
+        $knowledge = 0;
+        $prof = 0;
+        $commSkills = 0;
+        $questionRec = 0;
         foreach ($evaluations as $evaluation) {
             if ($evaluation['comments'] != '') {
-                $data['students_comments'] .= "* " . $evaluation['comments'] . "\n" . "-------------------------------------------------" . "\n";
-                $data['number_of_comment']++;
+                $data['lecture_text_feedback'] .= "* " . $evaluation['comments'] . "\n" . "-------------------------------------------------" . "\n";
             }
+            $knowledge += $evaluation['knowledge_subject'];
+            $lecOrg += $evaluation['lecture_organization'];
+            $prof += $evaluation['professionalism'];
+            $commSkills += $evaluation['communication'];
+            $avgScore += $evaluation['score'];
+            $questionRec += $evaluation['questions_rec'];
         }
+        $data['avg_score'] = number_format($avgScore / $data['sample_size'], 2);
+        $data['avg_lecture_organization'] = number_format($lecOrg / $data['sample_size'], 2);
+        $data['avg_knowledge_subject'] = number_format($knowledge / $data['sample_size'], 2);
+        $data['avg_professionalism'] = number_format($prof / $data['sample_size'], 2);
+        $data['avg_communication'] = number_format($commSkills / $data['sample_size'], 2);
+        $data['avg_questions_rec'] = number_format($questionRec / $data['sample_size'], 2);
         $this->updateFeedbackForm($data, $projectId, $lectureId);
     }
 }
