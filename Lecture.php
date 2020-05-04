@@ -139,29 +139,76 @@ class Lecture
         $data = array();
         $data['sample_size'] = count($evaluations);
         $data['last_update'] = date('Y-m-d H:i:s');
-        $avgScore = 0;
-        $lecOrg = 0;
-        $knowledge = 0;
-        $prof = 0;
-        $commSkills = 0;
-        $questionRec = 0;
+        $avgScore = 'N/A';
+        $lecOrg = 'N/A';
+        $knowledge = 'N/A';
+        $prof = 'N/A';
+        $commSkills = 'N/A';
+        $questionRec = 'N/A';
         foreach ($evaluations as $evaluation) {
             if ($evaluation['comments'] != '') {
-                $data['lecture_text_feedback'] .= "* " . $evaluation['comments'] . "\n" . "-------------------------------------------------" . "\n";
+                $data['student_comments'] .= "* " . $evaluation['comments'] . "\n" . "-------------------------------------------------" . "\n";
             }
-            $knowledge += $evaluation['knowledge_subject'];
-            $lecOrg += $evaluation['lecture_organization'];
-            $prof += $evaluation['professionalism'];
-            $commSkills += $evaluation['communication'];
-            $avgScore += $evaluation['score'];
-            $questionRec += $evaluation['questions_rec'];
+            if ($evaluation['knowledge_subject']) {
+                $knowledge += $evaluation['knowledge_subject'];
+            }
+            if ($evaluation['lecture_organization']) {
+                $lecOrg += $evaluation['lecture_organization'];
+            }
+
+            if ($evaluation['professionalism']) {
+                $prof += $evaluation['professionalism'];
+            }
+
+            if ($evaluation['communication']) {
+                $commSkills += $evaluation['communication'];
+            }
+
+            if ($evaluation['score']) {
+                $avgScore += $evaluation['score'];
+            }
+
+            if ($evaluation['questions_rec']) {
+                $questionRec += $evaluation['questions_rec'];
+            }
         }
-        $data['avg_score'] = number_format($avgScore / $data['sample_size'], 2);
-        $data['avg_lecture_organization'] = number_format($lecOrg / $data['sample_size'], 2);
-        $data['avg_knowledge_subject'] = number_format($knowledge / $data['sample_size'], 2);
-        $data['avg_professionalism'] = number_format($prof / $data['sample_size'], 2);
-        $data['avg_communication'] = number_format($commSkills / $data['sample_size'], 2);
-        $data['avg_questions_rec'] = number_format($questionRec / $data['sample_size'], 2);
+
+        if ($avgScore != 'N/A') {
+            $data['avg_score'] = number_format($avgScore / $data['sample_size'], 2);
+        } else {
+            $data['avg_score'] = 'N/A';
+        }
+
+        if ($lecOrg != 'N/A') {
+            $data['avg_lecture_organization'] = number_format($lecOrg / $data['sample_size'], 2);
+        } else {
+            $data['avg_lecture_organization'] = 'N/A';
+        }
+
+        if ($knowledge != 'N/A') {
+            $data['avg_knowledge_subject'] = number_format($knowledge / $data['sample_size'], 2);
+        } else {
+            $data['avg_knowledge_subject'] = 'N/A';
+        }
+
+        if ($prof != 'N/A') {
+            $data['avg_professionalism'] = number_format($prof / $data['sample_size'], 2);
+        } else {
+            $data['avg_professionalism'] = 'N/A';
+        }
+
+        if ($commSkills != 'N/A') {
+            $data['avg_communication'] = number_format($commSkills / $data['sample_size'], 2);
+        } else {
+            $data['avg_communication'] = 'N/A';
+        }
+
+        if ($questionRec != 'N/A') {
+            $data['avg_questions_rec'] = number_format($questionRec / $data['sample_size'], 2);
+        } else {
+            $data['avg_questions_rec'] = 'N/A';
+        }
+
         $this->updateFeedbackForm($data, $projectId, $lectureId);
     }
 }
