@@ -121,7 +121,7 @@ class Lecture
         $response = \REDCap::saveData($projectId, 'json', json_encode(array($data)));
 
         if (!empty($response['errors'])) {
-            throw new \LogicException(implode(",", $response['errors']));
+            throw new \LogicException($response['errors']);
         }
         return false;
     }
