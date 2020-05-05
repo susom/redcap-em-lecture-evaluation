@@ -138,76 +138,53 @@ class Lecture
         $evaluations = $evaluation->getLectureEvaluations($lectureId);
         $data = array();
         $data['sample_size'] = count($evaluations);
+        $criteria = array(
+            'knowledge_subject',
+            'lecture_organization',
+            'professionalism',
+            'communication',
+            'score',
+            'questions_rec'
+        );
+        $counts = array();
+        $totals = array();
         $data['last_update'] = date('Y-m-d H:i:s');
-        $avgScore = 'N/A';
-        $lecOrg = 'N/A';
-        $knowledge = 'N/A';
-        $prof = 'N/A';
-        $commSkills = 'N/A';
-        $questionRec = 'N/A';
+        $maxScore = 'N/A';
+        $minScore = 'N/A';
         foreach ($evaluations as $evaluation) {
             if ($evaluation['comments'] != '') {
                 $data['student_comments'] .= "* " . $evaluation['comments'] . "\n" . "-------------------------------------------------" . "\n";
             }
-            if ($evaluation['knowledge_subject']) {
-                $knowledge += $evaluation['knowledge_subject'];
-            }
-            if ($evaluation['lecture_organization']) {
-                $lecOrg += $evaluation['lecture_organization'];
-            }
 
-            if ($evaluation['professionalism']) {
-                $prof += $evaluation['professionalism'];
-            }
+            foreach ($criteria as $item) {
+                if ($evaluation[$item]) {
 
-            if ($evaluation['communication']) {
-                $commSkills += $evaluation['communication'];
-            }
+                    // special case to get max and min scores
+                    if ($item == 'score') {
+                        if (!is_numeric($maxScore) || $evaluation[$item] > $maxScore) {
+                            $maxScore = $evaluation[$item];
+                        }
 
-            if ($evaluation['score']) {
-                $avgScore += $evaluation['score'];
-            }
+                        if (!is_numeric($minScore) || $evaluation[$item] < $minScore) {
+                            $minScore = $evaluation[$item];
+                        }
+                    }
 
-            if ($evaluation['questions_rec']) {
-                $questionRec += $evaluation['questions_rec'];
+                    $totals[$item] += number_format($evaluation[$item], 2);
+                    $counts[$item]++;
+                }
             }
         }
 
-        if ($avgScore != 'N/A') {
-            $data['avg_score'] = number_format($avgScore / $data['sample_size'], 2);
-        } else {
-            $data['avg_score'] = 'N/A';
+        foreach ($criteria as $item) {
+            if ($totals[$item]) {
+                $data['avg_' . $item] = number_format((float)$totals[$item] / $counts[$item], 2);
+            } else {
+                $data['avg_' . $item] = 'N/A';
+            }
         }
 
-        if ($lecOrg != 'N/A') {
-            $data['avg_lecture_organization'] = number_format($lecOrg / $data['sample_size'], 2);
-        } else {
-            $data['avg_lecture_organization'] = 'N/A';
-        }
-
-        if ($knowledge != 'N/A') {
-            $data['avg_knowledge_subject'] = number_format($knowledge / $data['sample_size'], 2);
-        } else {
-            $data['avg_knowledge_subject'] = 'N/A';
-        }
-
-        if ($prof != 'N/A') {
-            $data['avg_professionalism'] = number_format($prof / $data['sample_size'], 2);
-        } else {
-            $data['avg_professionalism'] = 'N/A';
-        }
-
-        if ($commSkills != 'N/A') {
-            $data['avg_communication'] = number_format($commSkills / $data['sample_size'], 2);
-        } else {
-            $data['avg_communication'] = 'N/A';
-        }
-
-        if ($questionRec != 'N/A') {
-            $data['avg_questions_rec'] = number_format($questionRec / $data['sample_size'], 2);
-        } else {
-            $data['avg_questions_rec'] = 'N/A';
-        }
+        $data['range'] = $minScore . '–' . $maxScore;
 
         $this->updateFeedbackForm($data, $projectId, $lectureId);
     }
