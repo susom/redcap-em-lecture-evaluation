@@ -42,6 +42,7 @@ class LectureEvaluation extends \ExternalModules\AbstractExternalModule
 
     private $evaluation;
 
+    public $project;
     public function __construct()
     {
         try {
@@ -49,7 +50,9 @@ class LectureEvaluation extends \ExternalModules\AbstractExternalModule
 
             if ($_GET && $_GET['pid'] != null) {
                 //TODO main initiation
+                global $Proj;
 
+                $this->project = $Proj;
                 /**
                  * init student with its event id
                  */

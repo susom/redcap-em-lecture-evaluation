@@ -40,6 +40,16 @@ try {
 
     $module->emLog("record");
     $module->emLog($record);
+
+    $module->emLog("instrument evaluation");
+    $module->emLog($module->getEvaluation()->getName());
+
+    $module->emLog("event evaluation");
+    $module->emLog($module->getEvaluation()->getEvent());
+
+    $array = \Survey::getFollowupSurveyParticipantIdHash($module->project->forms[$module->getEvaluation()->getName()]['survey_id'],
+        $record, $module->getEvaluation()->getEvent(), false, 1);
+    $module->emLog($array);
     $url = REDCap::getSurveyLink($record, $module->getEvaluation()->getName(), $module->getEvaluation()->getEvent());
     $module->emLog("url");
     $module->emLog($url);
