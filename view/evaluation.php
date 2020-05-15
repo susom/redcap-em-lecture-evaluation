@@ -17,6 +17,8 @@ try {
     foreach ($lectureFields as $field) {
         $data[$field] = $lecture[$field];
     }
+    $module->emLog("Lecture");
+    $module->emLog($lecture);
 
     $student = array_pop($module->getStudent()->getRecord());
 
@@ -34,18 +36,27 @@ try {
         $record = $record['id'];
     }
 
+//    $array = \Survey::getFollowupSurveyParticipantIdHash($module->project->forms[$module->getEvaluation()->getName()]['survey_id'],
+//        $record, $module->getEvaluation()->getEvent(), false, 1);
+//    $module->emLog($array);
+//
+//    $array = \Survey::getFollowupSurveyParticipantIdHash($module->project->forms[$module->getEvaluation()->getName()]['survey_id'],
+//        $record, $module->getEvaluation()->getEvent(), false, 1);
+//
+//    if (!isset($array[1])) {
+//        throw  new \LogicException("could not generate evaluation hash please try again later.");
+//    };
+//    // Return full survey URL
+//    $url = APP_PATH_SURVEY_FULL . '?s=' . $array[1];
 
-    $array = \Survey::getFollowupSurveyParticipantIdHash($module->project->forms[$module->getEvaluation()->getName()]['survey_id'],
-        $record, $module->getEvaluation()->getEvent(), false, 1);
 
-    if (!isset($array[1])) {
-        throw  new \LogicException("could not generate evaluation hash please try again later.");
-    };
-    // Return full survey URL
-    $url = APP_PATH_SURVEY_FULL . '?s=' . $array[1];
-
+    $url = REDCap::getSurveyLink($record, $module->getEvaluation()->getName(), $module->getEvaluation()->getEvent());
     $module->emLog("url");
     $module->emLog($url);
+    if ($url == '' || is_null($url)) {
+        $module->emError($record);
+        throw new \LogicException("cant not generate survey URL for record $record");
+    }
     $module->redirect($url);
 } catch (\LogicException $e) {
     echo $e->getMessage();
