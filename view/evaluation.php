@@ -31,15 +31,15 @@ try {
     //if student hit the survey before then just load the URL
     $record = $module->getEvaluation()->isEvaluationComplete($data['evaluation_student_id'],
         $data['evaluation_lecture_id']);
-    $module->emLog("record");
-    $module->emLog($record);
+
     if ($record == false) {
         $record = $module->getEvaluation()->createSurveyRecord($data);
     } else {
         $record = $record['id'];
     }
 
-
+    $module->emLog("record");
+    $module->emLog($record);
     $url = REDCap::getSurveyLink($record, $module->getEvaluation()->getName(), $module->getEvaluation()->getEvent());
     $module->emLog("url");
     $module->emLog($url);
