@@ -93,7 +93,7 @@ class Student
 
     private function getStudentViaHash($identifier, $field = 'hash', $fields = array('hash'))
     {
-        # do filter logic on the foreach loop instead of getData
+        # check if fields are requested or not
         if (!empty($fields)) {
             $params = array(
                 'return_format' => 'array',
