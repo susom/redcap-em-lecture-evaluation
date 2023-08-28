@@ -112,6 +112,6 @@ class Student
                 return array($key => $records[$key]);
             }
         }
-        return false;
+        return [];
     }
 }

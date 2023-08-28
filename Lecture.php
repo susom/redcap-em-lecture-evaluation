@@ -94,7 +94,7 @@ class Lecture
             }
         }
 
-        return false;
+        return [];
     }
 
     public function getAllLecturesCount()
