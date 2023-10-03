@@ -92,8 +92,7 @@ use \REDCap;
                         <td><?php echo $notes ?></td>
                         <td>
                             <a href="<?php echo $module->getUrl('view/evaluation.php', true,
-                                    false) . '&hash=' . filter_var($_GET['hash'],
-                                    FILTER_SANITIZE_STRING) . '&lid=' . $id; ?>" class="btn btn-primary"
+                                    false) . '&hash=' . htmlspecialchars($_GET['hash']) . '&lid=' . $id; ?>" class="btn btn-primary"
                                id="correlated-report-submit">Evaluate
                             </a>
                         </td>
