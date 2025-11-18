@@ -3,7 +3,7 @@
 namespace Stanford\LectureEvaluation;
 
 use REDCap;
-
+use Exception;
 /**
  * Class Lecture
  * @package Stanford\LectureEvaluation
@@ -21,6 +21,10 @@ class Evaluation
     private $record;
 
     private $evaluations;
+
+    private $project;
+
+    private $data;
 
     public function __construct($eventId)
     {
@@ -99,6 +103,23 @@ class Evaluation
     }
 
 
+    public function getProject()
+    {
+        if (!$this->project) {
+            global $Proj;
+            $this->project = $Proj;
+        }
+        return $this->project;
+    }
+
+    public function getData($pid, $event_id)
+    {
+        if (!$this->data) {
+            $id_field = \REDCap::getRecordIdField();
+            $this->data = \REDCap::getData($pid, 'array', null, array($id_field), $event_id);
+        }
+        return $this->data;
+    }
     /**
      * @param $pid
      * @param int $event_id : Pass NULL or '' if CLASSICAL
@@ -110,19 +131,14 @@ class Evaluation
     private function getNextId($pid, $event_id = null, $prefix = '', $padding = false, $records = array())
     {
         //Get Project
-        global $Proj;
-        if (empty($Proj) || $Proj->project_id !== $pid) {
-            $thisProj = new \Project($pid);
-        } else {
-            $thisProj = $Proj;
-        }
+        $thisProj = $this->getProject();
 
         $id_field = $thisProj->table_pk;
         //If Classical no event or null is passed
         if (($event_id == '') OR ($event_id == null)) {
             throw new \LogicException("no event found");
         }
-        $q = \REDCap::getData($pid, 'array', null, array($id_field), $event_id);
+        $q = $this->getData($pid, $event_id);
         //$this->emLog($q, "Found records in project $pid using $id_field");
         $i = 1;
         do {
@@ -220,9 +236,8 @@ class Evaluation
         // STEP 1: CHECK THE NEW_RECORD_CACHE FIRST FOR HIGH-HIT SCENARIOS
         // Is the record in the redcap_new_record_cache
         $sql = sprintf("select 1 from redcap_new_record_cache
-            where project_id = %d and arm_id = %d and record = '%s'",
+            where project_id = %d and record = '%s'",
             intval($project_id),
-            intval($arm_id),
             db_escape($record)
         );
         $q = db_query($sql);
@@ -263,11 +278,9 @@ class Evaluation
         }
         // STEP 3: LETS TRY TO ADD IT TO THE NEW RECORD CACHE TO ENSURE IT IS STILL UNIQUE
         $sql = sprintf("insert into redcap_new_record_cache 
-            (project_id, event_id, arm_id, record, creation_time)
-            values (%d, %d, %d, '%s', '%s')",
+            (project_id, record, creation_time)
+            values (%d, '%s', '%s')",
             intval($project_id),
-            intval($event_id),
-            intval($arm_id),
             db_escape($record),
             db_escape(NOW)
         );
