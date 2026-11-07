@@ -27,9 +27,9 @@ reachable by anyone with a student link. Checklists: the redcap-em skill's `secu
 **Module Security Scanning** (`ExternalModules/bin/scan.php`, REDCap 17.5.9) on this branch: phpcs
 and Psalm taint analysis report no issues. The first run found 1 TaintedHeader (#11), the
 constructor (#12) and phpcs errors in the test scripts (namespaces, a PHP 8.2-only call, echo of CLI
-output); all are fixed. The only remaining step is `npm audit`. It fails in the web container (no
-`npm` there) and only runs because a local, git-ignored `node_modules/` was copied into the scan;
-the built module has none. `npm audit` on the host: 0 vulnerabilities.
+output); all are fixed. On a clean `git archive` of the branch (exactly what ships, no
+`node_modules/`) the scanner reports: "The scan completed successfully, and no issues were
+detected!" (exit 0). `npm audit` on the host: 0 vulnerabilities.
 
 Dependencies: no Composer dependencies. `npm audit` on the dev-only Playwright package: 0
 vulnerabilities. `package.json` is not loaded by REDCap; `node_modules/` is git-ignored.
