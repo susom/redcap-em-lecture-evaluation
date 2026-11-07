@@ -2,7 +2,6 @@
 
 namespace Stanford\LectureEvaluation;
 
-use Kigkonsult\Icalcreator\Standard;
 use REDCap;
 
 /**
@@ -13,16 +12,19 @@ use REDCap;
  */
 class Lecture
 {
+    /** What view/student renders and filters on, plus the mapping used to pick lectures. */
+    const LIST_FIELDS = array('id', 'course', 'topic', 'lecture_date', 'instructor', 'lecture_student_mapping');
+
     private $event;
 
-    private $record;
+    private $record = array();
 
     public function __construct($eventId)
     {
         try {
             $this->setEvent($eventId);
         } catch (\LogicException $e) {
-            echo $e->getMessage();
+            echo htmlspecialchars($e->getMessage(), ENT_QUOTES);
         }
     }
 
@@ -35,11 +37,19 @@ class Lecture
     }
 
     /**
-     * @param array $record
+     * Load one lecture by record id, with every field on the `lecture` form: view/evaluation copies
+     * all of them into the new evaluation record.
+     *
+     * @param string $id
      */
     public function setRecord($id)
     {
-        $this->record = $this->getLectureRecord($id, array('id', 'lecture_date', 'instructor', 'topic', 'course'));
+        $fields = array('id', 'lecture_date', 'instructor', 'topic', 'course');
+        $formFields = REDCap::getFieldNames('lecture');
+        if (is_array($formFields)) {
+            $fields = array_values(array_unique(array_merge($fields, $formFields)));
+        }
+        $this->record = $this->getLectureRecord($id, $fields);
     }
 
     /**
@@ -59,18 +69,33 @@ class Lecture
     }
 
     /**
-     * @return mixed
+     * Lectures whose date is today or earlier (or blank, which the pages count as TBA), with only
+     * the fields the pages render.
+     *
+     * @param string[]|null $mappingCodes the student's checked lecture_student_mapping codes: only
+     *        lectures sharing one of them are read (view/student skips every other lecture anyway).
+     *        null reads every lecture, for the admin view/students.php.
+     * @return array
      */
-    public function getCompletedLectures()
+    public function getCompletedLectures($mappingCodes = null)
     {
-        # do filter logic on the foreach loop instead of getData
+        if ($mappingCodes === null) {
+            $records = Data::get(array(
+                'events' => array($this->getEvent()),
+                'fields' => self::LIST_FIELDS,
+            ), 'lectures:all', true);
+        } else {
+            // a checked checkbox is stored as one row per code, value = the code
+            $codes = array_values(array_filter(array_map('strval', $mappingCodes), function ($code) {
+                return (bool)preg_match(Validator::CHECKBOX_CODE_PATTERN, $code);
+            }));
+            $records = Data::lookup($this->getEvent(), 'lecture_student_mapping', $codes, self::LIST_FIELDS,
+                'lectures:mapped');
+        }
+
+        # the date test stays in PHP, exactly as before
         $date = date('Y-m-d H:i:s');
-        $param = array(
-            'return_format' => 'array',
-            'events' => $this->getEvent()
-        );
         $result = array();
-        $records = \REDCap::getData($param);
         foreach ($records as $key => $record) {
             if ($record[$this->getEvent()]['lecture_date'] <= $date) {
                 $result[$key] = $records[$key];
@@ -81,29 +106,33 @@ class Lecture
 
     private function getLectureRecord($id, $fields = array('id'))
     {
-        $param = array(
-            'return_format' => 'array',
-            'events' => $this->getEvent(),
-        );
-
-
-        $records = \REDCap::getData($param);
+        $id = Validator::recordId($id);
+        if ($id === null) {
+            return array();
+        }
+        $records = Data::get(array(
+            'records' => array($id),
+            'events' => array($this->getEvent()),
+            'fields' => $fields,
+        ), 'lecture:id');
         foreach ($records as $key => $record) {
-            if ($key == $id) {
+            if ((string)$key === $id) {
                 return array($key => $record);
             }
         }
 
-        return [];
+        return array();
     }
 
+    /**
+     * Admin view/students.php only.
+     */
     public function getAllLecturesCount()
     {
-        $param = array(
-            'return_format' => 'array',
-            'events' => $this->getEvent(),
-        );
-        return count(\REDCap::getData($param));
+        return count(Data::get(array(
+            'events' => array($this->getEvent()),
+            'fields' => array(REDCap::getRecordIdField()),
+        ), 'lectures:count', true));
     }
 
     /**

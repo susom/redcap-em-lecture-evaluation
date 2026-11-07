@@ -7,20 +7,23 @@ namespace Stanford\LectureEvaluation;
 use \REDCap;
 
 try {
-    $lectureId = filter_var($_GET['lid'], FILTER_SANITIZE_STRING);
-    $hash = filter_var($_GET['hash'], FILTER_SANITIZE_STRING);
-    $module->emLog("Lecture ID" . $lectureId);
+    // The lecture and the student come from the link (lid, hash), validated and read once by the module.
     $lecture = $module->getLecture()->getRecord();
+    $lectureId = $lecture ? (string)key($lecture) : null;
+    $records = $module->getStudent()->getRecord();
+    $student = array_pop($records);
+    if ($lectureId === null || empty($student)) {
+        // Unknown or malformed link: never create an evaluation record for it.
+        throw new \LogicException("This evaluation link is not valid.");
+    }
+    $module->emLog("Lecture ID " . $lectureId);
     $lecture = $lecture[$lectureId][$module->getLecture()->getEvent()];
     //keep only lecture fields in $data
+    $data = array();
     $lectureFields = \REDCap::getFieldNames('lecture');
     foreach ($lectureFields as $field) {
         $data[$field] = $lecture[$field];
     }
-    $module->emLog("Lecture");
-    $module->emLog($lecture);
-
-    $student = array_pop($module->getStudent()->getRecord());
 
     $data['evaluation_lecture_id'] = $data['id'];
     $data['evaluation_student_id'] = $student[$module->getStudent()->getEvent()]['id'];
@@ -51,14 +54,27 @@ try {
 
 
     $url = REDCap::getSurveyLink($record, $module->getEvaluation()->getName(), $module->getEvaluation()->getEvent());
-    $module->emLog("url");
-    $module->emLog($url);
+    // never log $url: its s= value opens the survey
     if ($url == '' || is_null($url)) {
-        $module->emError($record);
+        $module->emError("could not generate survey URL for record " . $record);
         throw new \LogicException("cant not generate survey URL for record $record");
     }
     $module->redirect($url);
 } catch (\LogicException $e) {
-    echo $e->getMessage();
+    ?>
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Lecture Evaluation</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { margin: 0; padding: 24px 16px; font: 16px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #212529; background: #fff; }
+        p { max-width: 40rem; margin: 0 auto; }
+    </style>
+</head>
+<body><p><?php echo htmlspecialchars($e->getMessage(), ENT_QUOTES) ?></p></body>
+</html>
+<?php
 }
 ?>

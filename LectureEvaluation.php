@@ -4,6 +4,8 @@ namespace Stanford\LectureEvaluation;
 
 use REDCap;
 
+include_once("Validator.php");
+include_once("Data.php");
 include_once("Student.php");
 include_once("Lecture.php");
 include_once("Evaluation.php");
@@ -48,38 +50,12 @@ class LectureEvaluation extends \ExternalModules\AbstractExternalModule
         try {
             parent::__construct();
 
-            if ($_GET && $_GET['pid'] != null) {
-                //TODO main initiation
+            // Nothing is read here. The student, lecture and evaluation objects are built on first use
+            // (getStudent(), getLecture(), getEvaluation()), so a request only reads what it renders.
+            if (isset($_GET['pid']) && Validator::pid($_GET['pid']) !== null) {
                 global $Proj;
-
                 $this->project = $Proj;
-                /**
-                 * init student with its event id
-                 */
-                $this->setStudent(new Student($this->getProjectSetting("students")));
-
-                /**
-                 * load the actual student information
-                 */
-                if (isset($_GET['hash'])) {
-                    $this->getStudent()->setRecord(filter_var($_GET['hash'], FILTER_SANITIZE_STRING));
-                }
-
-                /**
-                 * init lecture with its event id
-                 */
-                $this->setLecture(new Lecture($this->getProjectSetting("lectures")));
-
-                if (isset($_GET['lid'])) {
-                    $this->getLecture()->setRecord(filter_var($_GET['lid'], FILTER_SANITIZE_STRING));
-                }
-
-                /**
-                 * init evaluation with its event id
-                 */
-                $this->setEvaluation(new Evaluation($this->getProjectSetting("evaluations")));
             }
-
         } catch (\LogicException $e) {
 
         }
@@ -90,6 +66,9 @@ class LectureEvaluation extends \ExternalModules\AbstractExternalModule
      */
     public function getEvaluation()
     {
+        if ($this->evaluation === null) {
+            $this->evaluation = new Evaluation($this->getProjectSetting("evaluations"));
+        }
         return $this->evaluation;
     }
 
@@ -106,6 +85,13 @@ class LectureEvaluation extends \ExternalModules\AbstractExternalModule
      */
     public function getLecture()
     {
+        if ($this->lecture === null) {
+            $this->lecture = new Lecture($this->getProjectSetting("lectures"));
+            // the lecture named in the link (view/evaluation)
+            if (isset($_GET['lid'])) {
+                $this->lecture->setRecord(Validator::recordId($_GET['lid']));
+            }
+        }
         return $this->lecture;
     }
 
@@ -122,6 +108,14 @@ class LectureEvaluation extends \ExternalModules\AbstractExternalModule
      */
     public function getStudent()
     {
+        if ($this->student === null) {
+            $this->student = new Student($this->getProjectSetting("students"));
+            // the student named in the link (view/student, view/evaluation); a malformed hash is
+            // treated like an unknown one and reads nothing
+            if (isset($_GET['hash'])) {
+                $this->student->setRecord(Validator::hash($_GET['hash']));
+            }
+        }
         return $this->student;
     }
 
@@ -144,8 +138,11 @@ class LectureEvaluation extends \ExternalModules\AbstractExternalModule
     public function createStudentUrl()
     {
         try {
-            $students = $this->getStudent()->getAllStudent();
+            // one read of every student's id and hash; it also seeds generateHash()'s set of used hashes
+            $students = $this->getStudent()->getAllStudent(array('id', 'hash'));
+            $this->getStudent()->primeExistingHashes($students);
             foreach ($students as $id => $student) {
+                $data = array();
                 if ($student[$this->getStudent()->getEvent()]['hash'] == '') {
                     $data['id'] = $id;
                     $data['active'] = ACTIVE;
@@ -159,7 +156,7 @@ class LectureEvaluation extends \ExternalModules\AbstractExternalModule
                 }
             }
         } catch (\LogicException $e) {
-            echo $e->getMessage();
+            echo htmlspecialchars($e->getMessage(), ENT_QUOTES);
         }
     }
 
@@ -182,6 +179,7 @@ class LectureEvaluation extends \ExternalModules\AbstractExternalModule
             $eval = $this->getEvaluation()->getRecord();
             $sid = $eval[$record][$this->getEvaluation()->getEvent()]['evaluation_student_id'];
 
+            $data = array();
             $data['id'] = $record;
             $data['lecture_complete'] = COMPLETE;
             $data['evaluation_setup_complete'] = COMPLETE;
@@ -194,7 +192,8 @@ class LectureEvaluation extends \ExternalModules\AbstractExternalModule
             $this->getStudent()->setRecord($sid, 'id');
             $student = $this->getStudent()->getRecord();
 
-            $this->redirect($this->generateURL($student[$sid][$this->getStudent()->getEvent()]['hash']));
+            $hash = isset($student[$sid]) ? $student[$sid][$this->getStudent()->getEvent()]['hash'] : null;
+            $this->redirect($this->generateURL($hash));
             $this->exitAfterHook();
         }
     }
@@ -203,7 +202,9 @@ class LectureEvaluation extends \ExternalModules\AbstractExternalModule
     {
         if ($instrument == "student") {
             $this->getStudent()->setRecord($record, 'id');
-            $student = array_pop($this->getStudent()->getRecord());
+            $records = $this->getStudent()->getRecord();
+            $student = array_pop($records);
+            $data = array();
             if ($student[$this->getStudent()->getEvent()]['hash'] == '') {
                 $data['hash'] = $this->getStudent()->generateHash();
             } else {
@@ -225,6 +226,25 @@ class LectureEvaluation extends \ExternalModules\AbstractExternalModule
             }
 
         }
+    }
+
+    /**
+     * @param array|null $student one student's [event_id => fields]
+     * @return string[] the lecture_student_mapping codes the student has checked
+     */
+    public function getStudentMappingCodes($student)
+    {
+        $codes = array();
+        $map = isset($student[$this->getStudent()->getEvent()]['lecture_student_mapping'])
+            ? $student[$this->getStudent()->getEvent()]['lecture_student_mapping'] : array();
+        if (is_array($map)) {
+            foreach ($map as $code => $checked) {
+                if ($checked != "0") {
+                    $codes[] = (string)$code;
+                }
+            }
+        }
+        return $codes;
     }
 
     public function isStudentMappedToLecture($student, $lecture)

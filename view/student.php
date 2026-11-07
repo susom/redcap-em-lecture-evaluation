@@ -14,6 +14,8 @@ use \REDCap;
     <meta charset="utf-8">
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- the page URL carries the student's link hash: never send it to the CDNs below -->
+    <meta name="referrer" content="no-referrer">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
           integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap4.min.css">
@@ -53,12 +55,15 @@ use \REDCap;
             </thead>
             <tbody>
             <?php
-            $lectures = $module->getLecture()->getCompletedLectures();
+            $records = $module->getStudent()->getRecord();
+            $student = array_pop($records);
+            $studentId = $student[$module->getStudent()->getEvent()]['id'];
+            // only the lectures that share a mapping code with this student (all others are skipped below)
+            $lectures = $student ? $module->getLecture()->getCompletedLectures($module->getStudentMappingCodes($student)) : array();
+            $hash = Validator::hash($_GET['hash'] ?? null);
             $completed = 0;
             $total = 0;
             $TBA = 0;
-            $student = array_pop($module->getStudent()->getRecord());
-            $studentId = $student[$module->getStudent()->getEvent()]['id'];
             if (!empty($lectures)) {
                 foreach ($lectures as $id => $lecture) {
                     $notes = '';
@@ -84,15 +89,15 @@ use \REDCap;
                     }
                     ?>
                     <tr>
-                        <td><?php echo $lecture[$module->getLecture()->getEvent()]['course'] ?></td>
-                        <td><?php echo $lecture[$module->getLecture()->getEvent()]['topic'] ?></td>
+                        <td><?php echo htmlspecialchars((string)$lecture[$module->getLecture()->getEvent()]['course'], ENT_QUOTES) ?></td>
+                        <td><?php echo htmlspecialchars((string)$lecture[$module->getLecture()->getEvent()]['topic'], ENT_QUOTES) ?></td>
                         <td><?php echo date('m/d/Y',
                                 strtotime($lecture[$module->getLecture()->getEvent()]['lecture_date'])) ?></td>
-                        <td><?php echo $lecture[$module->getLecture()->getEvent()]['instructor'] ?></td>
+                        <td><?php echo htmlspecialchars((string)$lecture[$module->getLecture()->getEvent()]['instructor'], ENT_QUOTES) ?></td>
                         <td><?php echo $notes ?></td>
                         <td>
                             <a href="<?php echo $module->getUrl('view/evaluation.php', true,
-                                    false) . '&hash=' . htmlspecialchars($_GET['hash']) . '&lid=' . $id; ?>" class="btn btn-primary"
+                                    false) . '&hash=' . htmlspecialchars((string)$hash, ENT_QUOTES) . '&lid=' . htmlspecialchars(rawurlencode((string)$id), ENT_QUOTES); ?>" class="btn btn-primary"
                                id="correlated-report-submit">Evaluate
                             </a>
                         </td>
