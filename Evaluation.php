@@ -283,15 +283,12 @@ class Evaluation
             return false;
         }
         // STEP 3: LETS TRY TO ADD IT TO THE NEW RECORD CACHE TO ENSURE IT IS STILL UNIQUE
-        try {
-            \ExternalModules\ExternalModules::query(
-                "insert into redcap_new_record_cache (project_id, record, creation_time) values (?, ?, ?)",
-                array((int)$project_id, (string)$record, NOW));
-            return true;
-        } catch (\Exception $e) {
-            // Duplicate (another request reserved it first) or other error: try a different id
-            return false;
-        }
+        // INSERT IGNORE: when another request reserved the id first, no row is inserted (affected rows 0)
+        // and nothing is written to the error log. Parallel tabs make that race routine.
+        \ExternalModules\ExternalModules::query(
+            "insert ignore into redcap_new_record_cache (project_id, record, creation_time) values (?, ?, ?)",
+            array((int)$project_id, (string)$record, NOW));
+        return db_affected_rows() === 1;
     }
 
     private function getEvaluationRecord($id)

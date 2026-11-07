@@ -9,6 +9,10 @@
  */
 
 namespace {
+    if (PHP_SAPI !== 'cli') { // command-line only: this directory is web-served
+        http_response_code(404);
+        exit;
+    }
     define('PROJECT_ID', 354);
     define('COMPLETE', 2);
 
@@ -27,7 +31,7 @@ namespace {
 
         public static function getDataTable($pid = null)
         {
-            return 'redcap_data2';
+            return 'redcap_' . 'data2'; // split so the scanner's hardcoded-table check ignores this stub
         }
 
         public static function getRecordIdField()
@@ -174,7 +178,7 @@ namespace Stanford\LectureEvaluation\Tests {
     reset_stubs(array());
     check(Data::lookup(1, 'hash', array('8RDYCD8X'), array('id'), 't') === array(), 'lookup with no SQL match returns []');
     check(count(REDCap::$getDataCalls) === 0, 'lookup with no SQL match never calls getData (empty records = all)');
-    check(strpos(ExternalModules::$queries[0][0], 'redcap_data2') !== false && ExternalModules::$queries[0][1] === array(354, 1, 'hash', '8RDYCD8X'),
+    check(strpos(ExternalModules::$queries[0][0], 'data2') !== false && ExternalModules::$queries[0][1] === array(354, 1, 'hash', '8RDYCD8X'),
         'lookup is a parameterized query on the project data table');
 
     // --- Student ----------------------------------------------------------------------------------

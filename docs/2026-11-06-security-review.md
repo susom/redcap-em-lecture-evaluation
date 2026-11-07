@@ -19,6 +19,17 @@ reachable by anyone with a student link. Checklists: the redcap-em skill's `secu
 | 8 | Low | classes | exception messages echoed unescaped | `htmlspecialchars` |
 | 9 | Low | `Evaluation::reserveNewRecordId` | `new \Project($Proj)` (an object where an id is expected); any int project id crashed | `new \Project($project_id)`, string comparison |
 | 10 | Data minimization | all lookups | whole-event, all-field reads | bounded reads; see `2026-11-06-bounded-reads.md` |
+| 11 | Medium (scanner: TaintedHeader) | `redcap_survey_complete` | the student's stored `hash` went from the database into a `Location` header unvalidated | `Validator::hash()` first; redirect through the framework's `ExternalModules::redirectAfterHook()` (static: framework v1 has no `$this->redirectAfterHook()`, and calling it threw, which lost the survey submission; caught by the E2E before commit) |
+| 12 | Medium (scanner: Constructor) | `LectureEvaluation` | module constructor | removed; everything is lazy |
+| 13 | High | `tests/fixture/*.php`, `tests/unit/run.php` | the test scripts live in the web-served module directory and answered HTTP (200/302) | first statement: `PHP_SAPI !== 'cli'` → 404 (verified: all three return 404 with an empty body) |
+| 14 | Low (log noise) | `reserveNewRecordId` | when two tabs raced for the same `E<n>`, the duplicate-key insert threw, and the framework logged the SQL and a stack trace for every collision | `INSERT IGNORE` + affected rows; no log entry |
+
+**Module Security Scanning** (`ExternalModules/bin/scan.php`, REDCap 17.5.9) on this branch: phpcs
+and Psalm taint analysis report no issues. The first run found 1 TaintedHeader (#11), the
+constructor (#12) and phpcs errors in the test scripts (namespaces, a PHP 8.2-only call, echo of CLI
+output); all are fixed. The only remaining step is `npm audit`. It fails in the web container (no
+`npm` there) and only runs because a local, git-ignored `node_modules/` was copied into the scan;
+the built module has none. `npm audit` on the host: 0 vulnerabilities.
 
 Dependencies: no Composer dependencies. `npm audit` on the dev-only Playwright package: 0
 vulnerabilities. `package.json` is not loaded by REDCap; `node_modules/` is git-ignored.
@@ -39,8 +50,9 @@ vulnerabilities. `package.json` is not loaded by REDCap; `node_modules/` is git-
    into the evaluation event of a lecture record, and redirects the instructor to an empty student
    page. Fix: return early unless `$instrument === 'evaluation_survey'`.
 4. **No `framework-version` in `config.json`** (framework v1). Moving to a current version enables
-   `$module->escape()`, `$module->query()` and no-auth logging controls, but changes framework
-   behaviour. Do it as its own change, with these E2E scripts as the regression check.
+   `$module->escape()`, `$module->query()`, `$this->redirectAfterHook()` and no-auth logging
+   controls, but changes framework behaviour. Do it as its own change, with these E2E scripts as the
+   regression check.
 5. **Third-party JS on a no-auth page**: jQuery, jQuery UI and DataTables are loaded from CDNs without
    SRI (only Bootstrap has `integrity`). A compromised CDN could read the page, including the hash in
    the URL. Vendor them into `asset/`, or add SRI hashes.
@@ -59,6 +71,6 @@ vulnerabilities. `package.json` is not loaded by REDCap; `node_modules/` is git-
 - [x] Writes go through `REDCap::saveData` (audited by REDCap).
 - [x] `getData` calls are field-scoped and record-scoped (admin exceptions listed in the bounded-reads doc).
 
-The authoritative check is **Control Center → External Modules → Module Security Scanning**. Run it on
-this branch before release. Stanford-specific policy (approved services, data classification) still
+The authoritative check is **Control Center → External Modules → Module Security Scanning**. The
+same scanner was run from the command line (above); run it again on the release tag. Stanford-specific policy (approved services, data classification) still
 needs to be confirmed with the REDCap team lead; nothing here sends data outside REDCap.

@@ -27,6 +27,8 @@ final class Validator
     const CHECKBOX_CODE_PATTERN = '/^[A-Za-z0-9_.\-]{1,100}$/';
 
     /**
+     * Only [A-Za-z0-9] can pass, so the result is safe in HTML, headers, URLs and SQL literals.
+     *
      * @param mixed $value
      * @return string|null the hash, or null when it is missing or malformed
      */
@@ -36,6 +38,8 @@ final class Validator
     }
 
     /**
+     * Only [A-Za-z0-9_.-] can pass, so the result is safe in HTML, headers, URLs and SQL literals.
+     *
      * @param mixed $value
      * @return string|null the record name, or null when it is missing or malformed
      */

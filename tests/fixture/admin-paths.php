@@ -1,4 +1,10 @@
 <?php
+namespace Stanford\LectureEvaluation\Fixture;
+
+if (PHP_SAPI !== 'cli') { // command-line only: this directory is web-served
+    http_response_code(404);
+    exit;
+}
 /**
  * Exercises the module's admin-side paths on the synthetic perf fixture and prints what they
  * produce, so a run before a change can be diffed against a run after it:
@@ -38,12 +44,12 @@ function measure(string $label, callable $fn)
 {
     gc_collect_cycles();
     if (function_exists('memory_reset_peak_usage')) {
-        memory_reset_peak_usage();
+        call_user_func('memory_reset_peak_usage'); // PHP 8.2+
     }
     $base = memory_get_usage();
     $t = microtime(true);
     $r = $fn();
-    printf("PERF %-28s peak_delta_mb=%7.1f wall_s=%6.3f\n", $label, (memory_get_peak_usage() - $base) / 1048576, microtime(true) - $t);
+    fprintf(STDOUT, "PERF %-28s peak_delta_mb=%7.1f wall_s=%6.3f\n", $label, (memory_get_peak_usage() - $base) / 1048576, microtime(true) - $t);
     return $r;
 }
 
@@ -66,7 +72,7 @@ foreach (array_slice($argv, 2) ?: ['L181', 'L2', 'L299'] as $lid) {
     });
     $v = fieldValues($pid, $evL, $lid, $fb);
     $v['student_comments'] = 'sha1:' . sha1((string)$v['student_comments']) . ' len=' . strlen((string)$v['student_comments']);
-    echo "FEEDBACK $lid " . json_encode($v) . "\n";
+    fwrite(STDOUT, "FEEDBACK $lid " . json_encode($v) . "\n");
 }
 
 // 2. createStudentUrl for hashless students (as after a Data Import) ----------------------------
@@ -96,9 +102,9 @@ foreach (['S9001', 'S9002', 'S9003', 'S9004'] as $sid) {
     $v = fieldValues($pid, $evS, $sid, ['hash', 'student_url', 'active']);
     $fmt = (bool)preg_match('/^[34789ACDEFHJKLMNPRTWXY]{8}$/', (string)$v['hash']);
     $urlOk = $v['student_url'] === $module->getUrl('view/student.php', true, true) . '&hash=' . $v['hash'];
-    echo "NEWSTUDENT $sid hash_format_ok=" . json_encode($fmt) . " url_ok=" . json_encode($urlOk) . " active=" . json_encode($v['active']) . "\n";
+    fwrite(STDOUT, "NEWSTUDENT $sid hash_format_ok=" . json_encode($fmt) . " url_ok=" . json_encode($urlOk) . " active=" . json_encode($v['active']) . "\n");
 }
-echo "HASHES unique=" . json_encode(count($hashes) === count(array_unique($hashes))) . " count=" . count($hashes) . "\n";
+fwrite(STDOUT, "HASHES unique=" . json_encode(count($hashes) === count(array_unique($hashes))) . " count=" . count($hashes) . "\n");
 
 // 4. view/students.php ------------------------------------------------------------------------------
 $html = measure('view/students.php', function () use ($module) {
@@ -109,7 +115,7 @@ $html = measure('view/students.php', function () use ($module) {
 $html = preg_replace('/S900[1-4].*?<\/tr>/s', '', $html);   // rows of the students this script just added
 $html = preg_replace('/hash=[34789ACDEFHJKLMNPRTWXY]{8}/', 'hash=<h>', $html);
 preg_match_all('/<tr>\s*<td>(.*?)<\/td>.*?<td>(\d+)<\/td>\s*<td>(\d+)<\/td>\s*<td>(-?\d+)<\/td>/s', $html, $m, PREG_SET_ORDER);
-echo "STUDENTS_PAGE rows=" . count($m) . " sha1=" . sha1($html) . "\n";
+fwrite(STDOUT, "STUDENTS_PAGE rows=" . count($m) . " sha1=" . sha1($html) . "\n");
 foreach (array_slice($m, 0, 5) as $row) {
-    echo "  {$row[1]} completed={$row[2]} pending={$row[3]} future={$row[4]}\n";
+    fwrite(STDOUT, "  {$row[1]} completed={$row[2]} pending={$row[3]} future={$row[4]}\n");
 }

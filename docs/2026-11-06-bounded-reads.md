@@ -37,7 +37,7 @@ It also counts the records each call returns.
 | `processFeedback` | lookup on `evaluation_lecture_id`, the 9 fields it aggregates |
 | Next `E<n>` id | record names only (a set from one parameterized query), same gap-filling |
 | `generateHash` / `createStudentUrl` | existing hashes read once into a set (was O(students²) reads) |
-| Constructor | reads nothing; `getStudent()`, `getLecture()` and `getEvaluation()` build on first use |
+| Constructor | removed; `getStudent()`, `getLecture()` and `getEvaluation()` build on first use |
 
 **Why not `filterLogic`.** The plan was `filterLogic` with an event-prefixed `[event][field] = 'value'`.
 We built and measured it, and it does not bound the read in REDCap 17.5.9. `Records::applyFilteringLogic`
@@ -73,6 +73,11 @@ collation ignores case, so every caller re-checks the value strictly in PHP, as 
   `record regexp 'E3'` also matched E30-E39. A latent `new \Project($Proj)` (object instead of id)
   is fixed too.
 - `view/students.php`: student names, emails and URLs are HTML-escaped.
+- Survey complete: the stored hash is validated before it goes into the redirect, and the redirect
+  uses the framework's `ExternalModules::redirectAfterHook()`. Same `Location` header and
+  `exitAfterHook()` as before.
+- `reserveNewRecordId` reserves with `INSERT IGNORE`, so two tabs racing for the same `E<n>` no
+  longer write an error-log entry per collision.
 
 ### The one intentional behaviour change
 
@@ -145,7 +150,9 @@ docker exec -w /var/www/html/modules-local/lecture_evaluation_v9.9.9 redcap_2023
 `e2e/student-flow.js` writes every page it lands on, plus `results.json`, to `e2e/out/<label>/`, so two
 labels can be diffed. REDCap's own survey page raises one JS error on load ("reading
 'offsetHeight'"), the same number of times before and after. The script records it but doesn't count
-it as a failure.
+it as a failure. During the 20-tab test the system-enabled `redcap_notifications` module logs CSRF
+mismatches for its survey-page AJAX when a tab closes mid-request. That module isn't part of this
+change. `redcap_error_log` doesn't grow during a run.
 
 To measure memory per request, add a temporary `register_shutdown_function` in the constructor that
 appends `memory_get_peak_usage()`, wall time and `Data::calls()` (labels and record counts, no values,

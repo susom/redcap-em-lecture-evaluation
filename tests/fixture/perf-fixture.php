@@ -1,4 +1,10 @@
 <?php
+namespace Stanford\LectureEvaluation\Fixture;
+
+if (PHP_SAPI !== 'cli') { // command-line only: this directory is web-served
+    http_response_code(404);
+    exit;
+}
 /**
  * Local-only performance fixture for the Lecture Evaluations EM.
  *
@@ -165,7 +171,7 @@ if ($mode === 'create') {
             $mid, $pid, db_escape($s['key']), db_escape($s['type']), db_escape($value)));
     }
 
-    echo json_encode(['pid' => $pid, 'events' => $eventMap]) . "\n";
+    fwrite(STDOUT, json_encode(['pid' => $pid, 'events' => $eventMap]) . "\n");
     exit(0);
 }
 
@@ -203,7 +209,7 @@ if ($mode === 'drop') {
     q("DELETE FROM redcap_external_module_settings WHERE project_id = $pid");
     q("DELETE FROM redcap_user_rights WHERE project_id = $pid");
     q("DELETE FROM redcap_projects WHERE project_id = $pid");
-    echo "dropped $pid\n";
+    fwrite(STDOUT, "dropped $pid\n");
     exit(0);
 }
 
@@ -394,4 +400,4 @@ foreach ($pick as $sid) {
         'url' => $base . '&hash=' . $students[$sid]['hash'],
     ];
 }
-echo json_encode($fixture, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n";
+fwrite(STDOUT, json_encode($fixture, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");

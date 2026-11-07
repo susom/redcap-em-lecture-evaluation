@@ -44,22 +44,9 @@ class LectureEvaluation extends \ExternalModules\AbstractExternalModule
 
     private $evaluation;
 
-    public $project;
-    public function __construct()
-    {
-        try {
-            parent::__construct();
-
-            // Nothing is read here. The student, lecture and evaluation objects are built on first use
-            // (getStudent(), getLecture(), getEvaluation()), so a request only reads what it renders.
-            if (isset($_GET['pid']) && Validator::pid($_GET['pid']) !== null) {
-                global $Proj;
-                $this->project = $Proj;
-            }
-        } catch (\LogicException $e) {
-
-        }
-    }
+    // No constructor (the framework's security scan asks for none, and it used to read whole events):
+    // getStudent(), getLecture() and getEvaluation() build their objects on first use, so a request
+    // only reads what it renders.
 
     /**
      * @return Evaluation
@@ -192,9 +179,11 @@ class LectureEvaluation extends \ExternalModules\AbstractExternalModule
             $this->getStudent()->setRecord($sid, 'id');
             $student = $this->getStudent()->getRecord();
 
-            $hash = isset($student[$sid]) ? $student[$sid][$this->getStudent()->getEvent()]['hash'] : null;
-            $this->redirect($this->generateURL($hash));
-            $this->exitAfterHook();
+            // the stored hash goes into a Location header: only a well-formed one
+            $hash = isset($student[$sid]) ? Validator::hash($student[$sid][$this->getStudent()->getEvent()]['hash']) : null;
+            // The framework's redirect (header, then exitAfterHook). Called statically: this module has no
+            // framework-version (v1), and v1 does not expose $this->redirectAfterHook().
+            \ExternalModules\ExternalModules::redirectAfterHook($this->generateURL($hash));
         }
     }
 
