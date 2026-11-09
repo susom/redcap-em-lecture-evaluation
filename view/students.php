@@ -57,22 +57,24 @@ use \REDCap;
             $students = $module->getStudent()->getAllStudent();
             $lectures = $module->getLecture()->getCompletedLectures();
             $count = $module->getLecture()->getAllLecturesCount();
+            // one read of every evaluation (ids and status only) instead of one scan per student
+            $module->getEvaluation()->loadAllStudents();
             if (!empty($students)) {
                 foreach ($students as $id => $student) {
                     list($completed, $todo) = $module->getEvaluation()->getStudentStates($id, $lectures,
                         $module->getLecture()->getEvent());
                     ?>
                     <tr>
-                        <td><?php echo $student[$module->getStudent()->getEvent()]['first_name'] ?></td>
-                        <td><?php echo $student[$module->getStudent()->getEvent()]['last_name'] ?></td>
+                        <td><?php echo htmlspecialchars((string)$student[$module->getStudent()->getEvent()]['first_name'], ENT_QUOTES) ?></td>
+                        <td><?php echo htmlspecialchars((string)$student[$module->getStudent()->getEvent()]['last_name'], ENT_QUOTES) ?></td>
                         <td>
-                            <a href="mailto:<?php echo $student[$module->getStudent()->getEvent()]['email'] ?>"><?php echo $student[$module->getStudent()->getEvent()]['email'] ?></a>
+                            <a href="mailto:<?php echo htmlspecialchars((string)$student[$module->getStudent()->getEvent()]['email'], ENT_QUOTES) ?>"><?php echo htmlspecialchars((string)$student[$module->getStudent()->getEvent()]['email'], ENT_QUOTES) ?></a>
                         </td>
                         <td><?php echo $completed ?></td>
                         <td><?php echo $todo ?></td>
                         <td><?php echo $count - ($completed + $todo) ?></td>
-                        <td><a href="<?php echo $student[$module->getStudent()->getEvent()]['student_url'] ?>"
-                               target="_blank"><?php echo $student[$module->getStudent()->getEvent()]['student_url'] ?></a>
+                        <td><a href="<?php echo htmlspecialchars((string)$student[$module->getStudent()->getEvent()]['student_url'], ENT_QUOTES) ?>"
+                               target="_blank"><?php echo htmlspecialchars((string)$student[$module->getStudent()->getEvent()]['student_url'], ENT_QUOTES) ?></a>
                         </td>
                     </tr>
                     <?php

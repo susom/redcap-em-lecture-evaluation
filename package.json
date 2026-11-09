@@ -1,0 +1,11 @@
+{
+  "name": "redcap-em-lecture-evaluation-e2e",
+  "private": true,
+  "description": "Dev-only E2E and load tests for the Lecture Evaluations EM. Nothing here is loaded by REDCap.",
+  "scripts": {
+    "e2e:install": "npm install && npx playwright install chromium"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

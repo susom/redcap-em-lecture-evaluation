@@ -42,3 +42,13 @@ Please make sure to assign each instrument to corresponding arm based on followi
 
 ## View Students
 You can see All student records with stats of how many evaluation submitted/pending/incomplete from "View Student Page".
+
+## Development
+
+- Student requests read only the one student, that student's lectures and evaluations, with explicit
+  field lists. All reads go through `Data.php`, which refuses an unbounded `getData`. See
+  [docs/2026-11-06-bounded-reads.md](docs/2026-11-06-bounded-reads.md) for why (prod OOM, 2026-11-06),
+  the measurements and how to test.
+- Security and PHI review, and the open decisions: [docs/2026-11-06-security-review.md](docs/2026-11-06-security-review.md).
+- Tests: `tests/unit/run.php` (no dependencies), `e2e/student-flow.js` (Playwright, against the synthetic
+  fixture from `tests/fixture/perf-fixture.php`). Never run the fixture scripts against production.
